@@ -1,28 +1,25 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json");
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Add these headers
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type");
-header("Content-Type: application/json");
+$logFile = '/tmp/locations.log'; // 100% writable location
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    error_log("Location captured: " . print_r($data, true));
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true) ?: [];
     
-    // Force log creation
-    $log = __DIR__ . '/locations.log';
-    file_put_contents($log, print_r($data, true) . "\n", FILE_APPEND);
-    chmod($log, 0666);
+    // Atomic write operation
+    file_put_contents($logFile, print_r($data, true)."\n", FILE_APPEND | LOCK_EX);
     
-    echo json_encode(['status' => 'success']);
-    exit;
+    // Immediate flush to disk
+    fflush(fopen($logFile, 'a'));
+    
+    error_log("LOCATION CAPTURED: ".$input);
+    die(json_encode(['status' => 'success']));
 }
-if (!file_exists($log)) touch($log);
-chmod($log, 0666);
 
 http_response_code(405);
-echo json_encode(['error' => 'Method not allowed']);
+die(json_encode(['error' => 'Method not allowed']));
 ?>
