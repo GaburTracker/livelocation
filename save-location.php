@@ -20,9 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo json_encode(['status' => 'success']);
     exit;
 }
+if (!file_exists($log)) touch($log);
+chmod($log, 0666);
 
 http_response_code(405);
 echo json_encode(['error' => 'Method not allowed']);
-if (!file_exists($log)) touch($log);
-chmod($log, 0666);
 ?>
