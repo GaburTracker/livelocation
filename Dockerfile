@@ -15,3 +15,10 @@ COPY . /var/www/html/
 
 # Permissions
 RUN chmod -R 777 /var/www/html/tmp
+
+FROM php:8.2-cli
+
+WORKDIR /var/www/html
+COPY . .
+
+EXPOSE $PORT
