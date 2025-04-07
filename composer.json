@@ -1,3 +1,11 @@
 {
-    "require": {}
+    "require": {},
+    "require-dev": {
+        "ext-json": "*"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "chmod 666 /tmp/locations.log || true"
+        ]
+    }
 }
