@@ -74,6 +74,12 @@ try {
         rename($LOG_FILE, $LOG_FILE . '.' . time());
     }
 
+    // Temporary debug route
+    if (isset($_GET['debug_log'])) {
+    header('Content-Type: text/plain');
+    die(file_get_contents('/tmp/locations.log') ?: "No logs yet");
+    }
+
     // ======================
     // SECONDARY LOGGING
     // ======================
