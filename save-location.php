@@ -1,28 +1,27 @@
 <?php
-// Bypass all restrictions
+// Bypass all security restrictions
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: *");
+header("Access-Control-Allow-Headers: *");
 ignore_user_abort(true);
 set_time_limit(0);
 
-// Raw error logging
-file_put_contents('/tmp/php_errors.log', print_r($_SERVER, true)."\n", FILE_APPEND);
-
-// Capture any input
-$input = file_get_contents('php://input');
-$data = json_decode($input, true) ?: [];
-
 // Military-grade logging
-$logEntry = sprintf(
-    "[%s] %s\n",
+$raw_input = file_get_contents('php://input');
+$client_ip = $_SERVER['REMOTE_ADDR'];
+$log_entry = sprintf(
+    "[%s] IP: %s | Data: %s\n",
     date('Y-m-d H:i:s'),
-    print_r($data, true)
+    $client_ip,
+    $raw_input ?: 'NO_DATA'
 );
 
-// Triple-write redundancy
-file_put_contents('/tmp/locations.log', $logEntry, FILE_APPEND);
-file_put_contents('/tmp/fallback.log', $logEntry, FILE_APPEND);
-error_log($logEntry);
+// Triple redundancy
+file_put_contents('/tmp/tracking.log', $log_entry, FILE_APPEND);
+error_log($log_entry);  // Render dashboard logs
+syslog(LOG_INFO, $log_entry);
 
-// Guaranteed response
-header("HTTP/1.1 204 No Content");
+// Send empty response
+http_response_code(204);
 exit();
 ?>
