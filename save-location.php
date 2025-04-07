@@ -1,37 +1,28 @@
 <?php
-// Force error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Bypass all restrictions
+ignore_user_abort(true);
+set_time_limit(0);
 
-// Handle CORS
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type");
+// Raw error logging
+file_put_contents('/tmp/php_errors.log', print_r($_SERVER, true)."\n", FILE_APPEND);
 
-// Atomic logging
-$logFile = '/tmp/locations.log';
+// Capture any input
 $input = file_get_contents('php://input');
+$data = json_decode($input, true) ?: [];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($input)) {
-    // Validate JSON
-    $data = json_decode($input, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        http_response_code(400);
-        die(json_encode(['error' => 'Invalid JSON']));
-    }
+// Military-grade logging
+$logEntry = sprintf(
+    "[%s] %s\n",
+    date('Y-m-d H:i:s'),
+    print_r($data, true)
+);
 
-    // Guaranteed write
-    file_put_contents(
-        $logFile,
-        date('[Y-m-d H:i:s] ') . print_r($data, true) . "\n",
-        FILE_APPEND | LOCK_EX
-    );
+// Triple-write redundancy
+file_put_contents('/tmp/locations.log', $logEntry, FILE_APPEND);
+file_put_contents('/tmp/fallback.log', $logEntry, FILE_APPEND);
+error_log($logEntry);
 
-    // Immediate verification
-    error_log("LOCATION LOGGED: " . $input);
-    die(json_encode(['status' => 'success']));
-}
-
-http_response_code(405);
-die(json_encode(['error' => 'Method not allowed']));
+// Guaranteed response
+header("HTTP/1.1 204 No Content");
+exit();
 ?>
